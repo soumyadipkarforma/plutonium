@@ -1,0 +1,69 @@
+# tool-installer.yml
+# Utility workflow: pre-installs and validates all MCP tools.
+# Can be triggered manually to verify the toolchain is healthy.
+
+name: MCP Tool Installer
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "requirements.txt"
+      - "tools/**"
+
+jobs:
+  install-tools:
+    name: Install and Validate MCP Tools
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: playwright install chromium --with-deps
+
+      # Validate that every tool module loads and exposes the required interface
+      - name: Validate tool plugins
+        run: |
+          python - <<'EOF'
+          import importlib, sys, pathlib
+
+          tools_dir = pathlib.Path("tools")
+          errors = []
+
+          for tool_file in sorted(tools_dir.glob("*_tool.py")):
+              module_name = f"tools.{tool_file.stem}"
+              try:
+                  mod = importlib.import_module(module_name)
+                  for attr in ("name", "description", "run"):
+                      if not hasattr(mod, attr):
+                          errors.append(f"{module_name}: missing '{attr}'")
+              except Exception as exc:
+                  errors.append(f"{module_name}: import error – {exc}")
+
+          if errors:
+              for e in errors:
+                  print(f"ERROR: {e}", file=sys.stderr)
+              sys.exit(1)
+          else:
+              print("All tools validated successfully.")
+          EOF
+
+      - name: Report tool inventory
+        run: |
+          python - <<'EOF'
+          import importlib, pathlib
+
+          for tool_file in sorted(pathlib.Path("tools").glob("*_tool.py")):
+              mod = importlib.import_module(f"tools.{tool_file.stem}")
+              print(f"  ✓  {mod.name:30s} – {mod.description}")
+          EOF

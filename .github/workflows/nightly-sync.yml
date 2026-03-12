@@ -1,0 +1,65 @@
+# nightly-sync.yml
+# Nightly maintenance workflow: updates Playwright browsers, validates tools,
+# and optionally syncs community-contributed tool definitions.
+
+name: Nightly Sync
+
+on:
+  schedule:
+    # Run every day at 02:00 UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  nightly-maintenance:
+    name: Nightly Maintenance
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Re-install Playwright to pick up the latest browser binaries
+      - name: Update Playwright browsers
+        run: playwright install chromium --with-deps
+
+      # Validate all registered MCP tools are still importable
+      - name: Validate tool plugins
+        run: |
+          python - <<'EOF'
+          import importlib, sys, pathlib
+
+          tools_dir = pathlib.Path("tools")
+          errors = []
+
+          for tool_file in sorted(tools_dir.glob("*_tool.py")):
+              module_name = f"tools.{tool_file.stem}"
+              try:
+                  mod = importlib.import_module(module_name)
+                  for attr in ("name", "description", "run"):
+                      if not hasattr(mod, attr):
+                          errors.append(f"{module_name}: missing '{attr}'")
+              except Exception as exc:
+                  errors.append(f"{module_name}: import error – {exc}")
+
+          if errors:
+              for e in errors:
+                  print(f"ERROR: {e}", file=sys.stderr)
+              sys.exit(1)
+          else:
+              print("All tools validated successfully.")
+          EOF
+
+      # Print a summary of installed package versions for auditing
+      - name: Log dependency versions
+        run: pip list --format=columns

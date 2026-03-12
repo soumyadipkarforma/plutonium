@@ -1,0 +1,75 @@
+# agent-runner.yml
+# Main workflow: triggered by repository_dispatch from the static UI.
+# Installs dependencies, clones the target repo, runs the AI agent,
+# and commits generated files back to the target repository.
+
+name: MCP Agent Runner
+
+on:
+  repository_dispatch:
+    types: [run_mcp_agent]
+
+jobs:
+  run-agent:
+    name: Run MCP AI Agent
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout this repository (contains the agent code)
+      - name: Checkout orchestration repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python 3.11
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3. Cache pip dependencies for faster runs
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 4. Install Python dependencies
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # 5. Install Playwright browsers (chromium only for minimal footprint)
+      - name: Install Playwright browsers
+        run: playwright install chromium --with-deps
+
+      # 6. Clone the target repository using the PAT
+      - name: Clone target repository
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          TARGET_REPO: ${{ github.event.client_payload.target_repo }}
+          TARGET_BRANCH: ${{ github.event.client_payload.branch }}
+        run: |
+          bash scripts/repo_clone.sh "$TARGET_REPO" "$TARGET_BRANCH"
+
+      # 7. Run the AI agent with the supplied prompt
+      - name: Run AI agent
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          PROMPT: ${{ github.event.client_payload.prompt }}
+          TARGET_REPO: ${{ github.event.client_payload.target_repo }}
+          TARGET_BRANCH: ${{ github.event.client_payload.branch }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python agent/agent.py \
+            --prompt "$PROMPT" \
+            --target-repo "$TARGET_REPO" \
+            --branch "$TARGET_BRANCH"
+
+      # 8. Commit and push generated files to the target repository
+      - name: Commit and push results
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          TARGET_REPO: ${{ github.event.client_payload.target_repo }}
+          TARGET_BRANCH: ${{ github.event.client_payload.branch }}
+        run: |
+          bash scripts/commit_changes.sh "$TARGET_REPO" "$TARGET_BRANCH"

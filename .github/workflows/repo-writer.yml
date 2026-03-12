@@ -1,0 +1,66 @@
+# repo-writer.yml
+# Dedicated workflow for writing generated files into a target repository.
+# Can be called as a reusable workflow by agent-runner or triggered manually.
+
+name: Repo Writer
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_repo:
+        description: "Target repository (owner/repo)"
+        required: true
+      branch:
+        description: "Branch to push to"
+        required: true
+        default: "main"
+      commit_message:
+        description: "Commit message"
+        required: false
+        default: "chore: apply AI-generated changes"
+  workflow_call:
+    inputs:
+      target_repo:
+        type: string
+        required: true
+      branch:
+        type: string
+        required: true
+      commit_message:
+        type: string
+        required: false
+        default: "chore: apply AI-generated changes"
+    secrets:
+      GH_PAT:
+        required: true
+
+jobs:
+  write-to-repo:
+    name: Write Generated Files to Target Repo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout orchestration repository
+        uses: actions/checkout@v4
+
+      - name: Configure Git identity (bot)
+        run: |
+          git config --global user.name  "AI MCP Bot"
+          git config --global user.email "ai-mcp@users.noreply.github.com"
+
+      - name: Clone target repository
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          TARGET_REPO: ${{ inputs.target_repo }}
+          TARGET_BRANCH: ${{ inputs.branch }}
+        run: |
+          bash scripts/repo_clone.sh "$TARGET_REPO" "$TARGET_BRANCH"
+
+      - name: Commit and push changes
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          TARGET_REPO: ${{ inputs.target_repo }}
+          TARGET_BRANCH: ${{ inputs.branch }}
+          COMMIT_MSG: ${{ inputs.commit_message }}
+        run: |
+          bash scripts/commit_changes.sh "$TARGET_REPO" "$TARGET_BRANCH" "$COMMIT_MSG"
