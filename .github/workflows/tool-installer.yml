@@ -11,6 +11,9 @@ on:
       - "requirements.txt"
       - "tools/**"
 
+permissions:
+  contents: read
+
 jobs:
   install-tools:
     name: Install and Validate MCP Tools

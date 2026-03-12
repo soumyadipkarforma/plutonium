@@ -1,5 +1,0 @@
-{
-  "defaultRepo": "soumyadipkarforma/plutonium",
-  "eventType": "run_mcp_agent",
-  "apiBase": "https://api.github.com"
-}

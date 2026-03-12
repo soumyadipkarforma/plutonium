@@ -1,120 +1,21 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Plutonium MCP Platform – serverless AI agent control panel" />
-  <title>Plutonium MCP Platform</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header class="site-header">
-    <div class="container">
-      <h1 class="logo">⚛ Plutonium <span class="accent">MCP Platform</span></h1>
-      <p class="tagline">Serverless AI Agent · Powered by GitHub Actions</p>
-    </div>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Plutonium – Serverless MCP Orchestration Platform powered by GitHub Actions" />
+    <meta name="theme-color" content="#04060f" />
 
-  <main class="container">
-    <!-- Configuration panel -->
-    <section class="card" id="config-panel">
-      <h2>Configuration</h2>
-      <p class="hint">
-        Enter your GitHub Personal Access Token (PAT) below.
-        The token is stored only in memory and is <strong>never</strong> sent anywhere
-        except the GitHub API.
-      </p>
-      <div class="form-group">
-        <label for="pat-input">GitHub PAT <span class="required">*</span></label>
-        <input
-          type="password"
-          id="pat-input"
-          placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-          autocomplete="off"
-          spellcheck="false"
-        />
-        <span class="field-hint">Requires <code>repo</code> and <code>workflow</code> scopes.</span>
-      </div>
-      <div class="form-group">
-        <label for="owner-input">Platform repository (owner/repo) <span class="required">*</span></label>
-        <input
-          type="text"
-          id="owner-input"
-          placeholder="soumyadipkarforma/plutonium"
-          autocomplete="off"
-        />
-        <span class="field-hint">The repository that hosts this MCP platform.</span>
-      </div>
-    </section>
+    <!-- Open Graph -->
+    <meta property="og:title" content="Plutonium MCP Platform" />
+    <meta property="og:description" content="Serverless AI agent orchestration via GitHub Actions" />
+    <meta property="og:type" content="website" />
 
-    <!-- Agent dispatch form -->
-    <section class="card" id="dispatch-panel">
-      <h2>Run AI Agent</h2>
-
-      <div class="form-group">
-        <label for="prompt-input">Prompt <span class="required">*</span></label>
-        <textarea
-          id="prompt-input"
-          rows="5"
-          placeholder="Describe what the AI agent should do…&#10;Example: Analyse the README and generate a CONTRIBUTING.md file."
-          spellcheck="true"
-        ></textarea>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="target-repo-input">Target repository <span class="required">*</span></label>
-          <input
-            type="text"
-            id="target-repo-input"
-            placeholder="owner/repo"
-            autocomplete="off"
-          />
-          <span class="field-hint">Repository where generated files will be committed.</span>
-        </div>
-
-        <div class="form-group">
-          <label for="branch-input">Branch</label>
-          <input
-            type="text"
-            id="branch-input"
-            value="main"
-            placeholder="main"
-            autocomplete="off"
-          />
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <button id="submit-btn" class="btn btn-primary" type="button">
-          ▶ Run Agent
-        </button>
-        <button id="reset-btn" class="btn btn-secondary" type="button">
-          ↺ Reset
-        </button>
-      </div>
-    </section>
-
-    <!-- Status / log panel -->
-    <section class="card" id="status-panel" aria-live="polite">
-      <h2>Status</h2>
-      <div id="status-log" class="log-box">
-        <p class="log-placeholder">Agent output will appear here…</p>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container">
-      <p>
-        Open-source under the MIT License ·
-        <a href="https://github.com/soumyadipkarforma/plutonium" target="_blank" rel="noopener">
-          GitHub
-        </a>
-      </p>
-    </div>
-  </footer>
-
-  <script src="app.js"></script>
-</body>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⚛</text></svg>" />
+    <title>Plutonium · MCP Platform</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

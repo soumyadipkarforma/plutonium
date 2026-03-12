@@ -34,6 +34,9 @@ on:
       GH_PAT:
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   write-to-repo:
     name: Write Generated Files to Target Repo

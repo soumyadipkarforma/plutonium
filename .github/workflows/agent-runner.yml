@@ -9,6 +9,9 @@ on:
   repository_dispatch:
     types: [run_mcp_agent]
 
+permissions:
+  contents: read
+
 jobs:
   run-agent:
     name: Run MCP AI Agent

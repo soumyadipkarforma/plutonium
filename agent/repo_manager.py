@@ -14,9 +14,17 @@ from __future__ import annotations
 import logging
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 from typing import Union
+
+# Strictly match GitHub HTTPS or SSH remote URLs.
+# Groups:  1 = owner/repo  (e.g. "octocat/hello-world")
+_GITHUB_REMOTE_RE = re.compile(
+    r"(?:https?://(?:[^@]*@)?github\.com/|git@github\.com:)"
+    r"([\w.\-]+/[\w.\-]+?)(?:\.git)?$"
+)
 
 from agent.config import (
     CLONE_BASE_DIR,
@@ -164,15 +172,15 @@ def commit_and_push(
 
     _run(["git", "commit", "--message", message], cwd=cwd)
 
-    # Update the remote URL to include the PAT (ensures authentication)
-    # We read the existing remote URL to get the repo slug
+    # Update the remote URL to include the PAT (ensures authentication).
+    # Use a strict regex to extract owner/repo — avoids substring-match attacks
+    # (e.g. a URL like evil.github.com.attacker.com would not match).
     remote_url_result = _run(["git", "remote", "get-url", "origin"], cwd=cwd)
     original_url = remote_url_result.stdout.strip()
 
-    # Extract owner/repo from URL (handles both https and ssh)
-    # e.g. https://github.com/owner/repo.git or git@github.com:owner/repo.git
-    if "github.com" in original_url:
-        slug = original_url.split("github.com")[-1].lstrip("/:").removesuffix(".git")
+    match = _GITHUB_REMOTE_RE.match(original_url)
+    if match:
+        slug = match.group(1)
         auth_url = _authenticated_url(slug, pat)
         _run(["git", "remote", "set-url", "origin", auth_url], cwd=cwd)
 
